@@ -10,12 +10,13 @@ export const AuthButton = component$(() => {
     const nav = useNavigate()
     const location = useLocation()
     const handleSignIn = $(async () => {
+        const { origin } = new URL(location.url)
         const supabase = createClient()
 
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'github',
             options: {
-                redirectTo: 'http://localhost:5173/auth/callback',
+                redirectTo: `${origin}/auth/callback`,
             },
         })
         if (error) {
