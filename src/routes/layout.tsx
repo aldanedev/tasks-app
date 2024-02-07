@@ -1,17 +1,44 @@
-import { component$, Slot } from "@builder.io/qwik";
-import type { RequestHandler } from "@builder.io/qwik-city";
+import { component$, Slot } from '@builder.io/qwik'
+import { routeLoader$, type RequestHandler } from '@builder.io/qwik-city'
+import { AuthButton } from '~/components/auth-button'
+import { createClient as createServerClient } from '~/utils/supabase/server'
 
 export const onGet: RequestHandler = async ({ cacheControl }) => {
-  // Control caching for this request for best performance and to reduce hosting costs:
-  // https://qwik.builder.io/docs/caching/
-  cacheControl({
-    // Always serve a cached response by default, up to a week stale
-    staleWhileRevalidate: 60 * 60 * 24 * 7,
-    // Max once every 5 seconds, revalidate on the server to get a fresh version of this page
-    maxAge: 5,
-  });
-};
+    // Control caching for this request for best performance and to reduce hosting costs:
+    // https://qwik.builder.io/docs/caching/
+    cacheControl({
+        public: false,
+        maxAge: 0,
+        sMaxAge: 0,
+        staleWhileRevalidate: 0,
+    })
+}
+
+export const useUserData = routeLoader$(async (requestEvent) => {
+    const supabase = createServerClient(requestEvent)
+    const { data } = await supabase.auth.getUser()
+
+    return data.user
+})
+
+export const onRequest: RequestHandler = async (requestEvent) => {
+    const { next, pathname, redirect } = requestEvent
+    const supabase = createServerClient(requestEvent)
+    const { error } = await supabase.auth.getUser()
+    const excludePaths = ['/auth/callback', '/']
+    if (error && !excludePaths.includes(pathname)) {
+        throw redirect(302, '/')
+    }
+    await next()
+}
 
 export default component$(() => {
-  return <Slot />;
-});
+    return (
+        <main class="m-auto max-w-screen-lg w-full">
+            <header class="flex flex-row-reverse p-4">
+                <AuthButton />
+            </header>
+            <Slot />
+        </main>
+    )
+})
