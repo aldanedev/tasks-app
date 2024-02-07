@@ -9,7 +9,6 @@ export const useAddTask = routeAction$(async (formaData, requestEvent) => {
         id: crypto.randomUUID(),
         description: formaData.description as string,
         is_done: false,
-        is_repeatable: false,
     }
     const supabase = createClient(requestEvent)
     await supabase.from('tasks').insert([task])

@@ -11,14 +11,17 @@ import { TaskList } from '~/ui/tasks/task-list'
 
 export const useTasksData = routeLoader$(async (requestEvent) => {
     const supabase = createClient(requestEvent)
+    const now = new Date()
+    now.setHours(0, 0, 0, 0)
+
     const { data } = await supabase
         .from('tasks')
         .select()
+        .gte('created_at', now.toISOString())
         .order('id', { ascending: false })
 
     return data as Task[]
 })
-
 
 export const useToggleTask = routeAction$(async (formaData, requestEvent) => {
     const supabase = createClient(requestEvent)
@@ -35,7 +38,6 @@ export const useDeleteTask = routeAction$(async (formaData, requestEvent) => {
 
 export default component$(() => {
     const user = useUserData()
-   
 
     if (!user.value) {
         return (
@@ -46,7 +48,6 @@ export default component$(() => {
     }
     return (
         <>
-            
             <TaskList />
         </>
     )
